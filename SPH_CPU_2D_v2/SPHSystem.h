@@ -51,7 +51,7 @@ public:
 	void buildGrid();
 	void _compDensPressure_process(Particle& p, unsigned hash);
 	void compDensPressure();
-	void _compForce_processCell(Particle* p, unsigned hash);
+	void _compForce_processCell(Particle& p, unsigned hash);
 	void forEachParticle(std::function<void(Particle&)> func);
 	void clearAcceleration();
 	void computeAcceleration();

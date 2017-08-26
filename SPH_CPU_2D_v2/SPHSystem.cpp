@@ -32,12 +32,12 @@ struct RoiIterator
 	glm::ivec2 next()
 	{
 		cursor = cursor + 1;
-		return center + offset + glm::ivec2{ (cursor % radius), (cursor / radius) };
+		return center + offset + glm::ivec2{(cursor % radius), (cursor / radius)};
 	}
 
 private:
-	glm::ivec2 center, offset{ -1, -1 };
-	int cursor{ -1 }, radius{ 3 };
+	glm::ivec2 center, offset{-1, -1};
+	int cursor{-1}, radius{3};
 };
 
 SPHSystem::SPHSystem()
@@ -57,10 +57,10 @@ SPHSystem::SPHSystem()
 
 	//params
 	gravity.x = 0.0f;
-	gravity.y = -1.8f;
+	gravity.y = -9.8f;
 	stiffness = 1000.0f;
 	restDensity = 1000.0f;
-	timeStep = 0.002f;
+	timeStep = 0.0005f;
 	wallDamping = 0.0f;
 	viscosity = 8.0f;
 
@@ -102,7 +102,6 @@ void SPHSystem::addSingleParticle(glm::vec2 pos, glm::vec2 vel)
 	p.acc = glm::vec2(0.0f, 0.0f);
 	p.ev = vel;
 	p.dens = restDensity;
-	// p->next = nullptr;
 	numParticle++;
 }
 
@@ -143,66 +142,58 @@ void SPHSystem::compTimeStep()
 
 void SPHSystem::buildGrid()
 {
-	for (unsigned i = 0; i < totCell; i++) cells[i].head = nullptr;
+	for (unsigned i = 0; i < totCell; i++) cells[i].head = -1;
+
 	for (unsigned i = 0; i < numParticle; i++)
 	{
-		auto p = &particles[i];
-		auto hash = calcCellHash(calcCellPos(p->pos));
-
-		if (cells[hash].head == nullptr)
-		{
-			p->next = nullptr;
-			cells[hash].head = p;
-		}
-		else
-		{
-			p->next = cells[hash].head;
-			cells[hash].head = p;
-		}
+		auto& p{particles[i]};
+		auto const hash{calcCellHash(calcCellPos(p.pos))};
+		p.next = cells[hash].head;
+		cells[hash].head = i;
 	}
 }
 
 void SPHSystem::_compDensPressure_process(Particle& p, unsigned hash)
 {
 	auto np = cells[hash].head;
-	while (np != nullptr)
+	while (np >= 0)
 	{
-		auto distVec = np->pos - p.pos;
+		auto distVec = particles[np].pos - p.pos;
 		auto dist2 = dot(distVec, distVec);
 
 		if (dist2 < INF || dist2 >= kernel * kernel)
 		{
-			np = np->next;
+			np = particles[np].next;
 			continue;
 		}
 
 		p.dens = p.dens + mass * poly6(dist2);
-		np = np->next;
+		np = particles[np].next;
 	}
 }
 
-void SPHSystem::_compForce_processCell(Particle* p, unsigned hash)
+void SPHSystem::_compForce_processCell(Particle& p, unsigned hash)
 {
 	auto np = cells[hash].head;
-	while (np != nullptr)
+	while (np >= 0)
 	{
-		auto distVec = p->pos - np->pos;
+		auto distVec = p.pos - particles[np].pos;
 		auto dist2 = dot(distVec, distVec);
 
 		if (dist2 < kernel * kernel && dist2 > INF)
 		{
 			auto dist = sqrt(dist2);
-			auto V = mass / p->dens;
+			auto V = mass / p.dens;
 
-			auto tempForce = V * (p->pres + np->pres) * spiky(dist);
-			p->acc = p->acc - distVec * tempForce / dist;
+			auto tempForce = V * (p.pres + particles[np].pres) * spiky(dist);
+			p.acc = p.acc - distVec * tempForce / dist;
 
-			auto relVel = np->ev - p->ev;
+			auto relVel = particles[np].ev - p.ev;
 			tempForce = V * viscosity * visco(dist);
-			p->acc = p->acc + relVel * tempForce;
+			p.acc = p.acc + relVel * tempForce;
 		}
 
-		np = np->next;
+		np = particles[np].next;
 	}
 }
 
@@ -256,7 +247,7 @@ void SPHSystem::compForce()
 		{
 			auto hash = calcCellHash(roi.next());
 			if (hash == 0xffffffff) continue;
-			_compForce_processCell(&p, hash);
+			_compForce_processCell(p, hash);
 		}
 	});
 }
@@ -308,6 +299,6 @@ void SPHSystem::animation()
 	compForce();
 	computeAcceleration();
 
-	//compTimeStep();
+	//	compTimeStep();
 	advection();
 }

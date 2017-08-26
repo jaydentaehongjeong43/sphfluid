@@ -23,9 +23,8 @@
 
 #include <glm/glm.hpp>
 
-class Particle
+struct Particle
 {
-public:
 	glm::vec2 pos;
 	glm::vec2 vel;
 	glm::vec2 acc;
@@ -34,11 +33,10 @@ public:
 	float dens;
 	float pres;
 
-	Particle* next{nullptr};
+	int next{-1};
 };
 
-class Cell
+struct Cell
 {
-public:
-	Particle* head;
+	int head{-1};
 };
