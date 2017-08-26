@@ -215,6 +215,9 @@ void SPHSystem::compDensPressure()
 			_compDensPressure_process(p, hash);
 		}
 
+	});
+	forEachParticle([&](Particle& p)
+	{
 		p.dens = p.dens + mass * poly6(0.0f);
 		p.pres = (pow(p.dens / restDensity, 7) - 1) * stiffness;
 	});
