@@ -34,6 +34,7 @@ struct Particle
 	float pres;
 
 	int next{-1};
+	int pad{0};
 };
 
 struct Cell

@@ -60,7 +60,7 @@ SPHSystem::SPHSystem()
 	gravity.y = -9.8f;
 	stiffness = 1000.0f;
 	restDensity = 1000.0f;
-	timeStep = 0.0005f;
+	timeStep = 0.0001f;
 	wallDamping = 0.0f;
 	viscosity = 8.0f;
 
@@ -140,10 +140,13 @@ void SPHSystem::compTimeStep()
 	timeStep = maxAcc > 0.0f ? kernel / maxAcc * 0.4f : 0.002f;
 }
 
-void SPHSystem::buildGrid()
+void SPHSystem::clearGrid()
 {
 	for (unsigned i = 0; i < totCell; i++) cells[i].head = -1;
+}
 
+void SPHSystem::buildGrid()
+{
 	for (unsigned i = 0; i < numParticle; i++)
 	{
 		auto& p{particles[i]};
@@ -155,56 +158,61 @@ void SPHSystem::buildGrid()
 
 void SPHSystem::_compDensPressure_process(Particle& p, unsigned hash)
 {
-	auto np = cells[hash].head;
-	while (np >= 0)
+	auto neighborIdx = cells[hash].head;
+	while (neighborIdx >= 0)
 	{
-		auto distVec = particles[np].pos - p.pos;
-		auto dist2 = dot(distVec, distVec);
+		auto const& neighbor{particles[neighborIdx]};
+		auto distVec{neighbor.pos - p.pos};
+		auto dist2{dot(distVec, distVec)};
 
 		if (dist2 < INF || dist2 >= kernel * kernel)
 		{
-			np = particles[np].next;
+			neighborIdx = neighbor.next;
 			continue;
 		}
 
 		p.dens = p.dens + mass * poly6(dist2);
-		np = particles[np].next;
+		neighborIdx = neighbor.next;
 	}
 }
 
 void SPHSystem::_compForce_processCell(Particle& p, unsigned hash)
 {
-	auto np = cells[hash].head;
-	while (np >= 0)
+	auto neighborIdx = cells[hash].head;
+	while (neighborIdx >= 0)
 	{
-		auto distVec = p.pos - particles[np].pos;
-		auto dist2 = dot(distVec, distVec);
+		auto const& neighbor{particles[neighborIdx]};
+		auto const distVec{p.pos - neighbor.pos};
+		auto const dist2{dot(distVec, distVec)};
 
 		if (dist2 < kernel * kernel && dist2 > INF)
 		{
 			auto dist = sqrt(dist2);
 			auto V = mass / p.dens;
 
-			auto tempForce = V * (p.pres + particles[np].pres) * spiky(dist);
+			auto tempForce = V * (p.pres + neighbor.pres) * spiky(dist);
 			p.acc = p.acc - distVec * tempForce / dist;
 
-			auto relVel = particles[np].ev - p.ev;
+			auto relVel = neighbor.ev - p.ev;
 			tempForce = V * viscosity * visco(dist);
 			p.acc = p.acc + relVel * tempForce;
 		}
 
-		np = particles[np].next;
+		neighborIdx = neighbor.next;
 	}
 }
 
-void SPHSystem::compDensPressure()
+void SPHSystem::clearDensPres()
 {
 	forEachParticle([](Particle& p)
 	{
 		p.dens = 0.0f;
 		p.pres = 0.0f;
 	});
+}
 
+void SPHSystem::compDensPressure()
+{
 	forEachParticle([&](Particle& p)
 	{
 		RoiIterator roi{calcCellPos(p.pos)};
@@ -292,12 +300,15 @@ void SPHSystem::advection()
 
 void SPHSystem::animation()
 {
-	buildGrid();
-	compDensPressure();
+	clearGrid(); // pass
+	buildGrid(); // pass
 
-	clearAcceleration();
-	compForce();
-	computeAcceleration();
+	clearDensPres(); // redundant
+	compDensPressure(); // pass, with doubt
+
+	clearAcceleration(); // redundant
+	compForce(); // pass
+	computeAcceleration(); // pass
 
 	//	compTimeStep();
 	advection();

@@ -48,10 +48,12 @@ public:
 
 	//animation
 	void compTimeStep();
+	void clearGrid();
 	void buildGrid();
 	void _compDensPressure_process(Particle& p, unsigned hash);
 	void compDensPressure();
 	void _compForce_processCell(Particle& p, unsigned hash);
+	void clearDensPres();
 	void forEachParticle(std::function<void(Particle&)> func);
 	void clearAcceleration();
 	void computeAcceleration();
@@ -59,13 +61,57 @@ public:
 	void advection();
 	void animation();
 
+	int getGridWidth() const { return gridSize.x; }
+	int getGridHeight() const { return gridSize.y; }
+
+	float getMass() const
+	{
+		return mass;
+	}
+
+	float getRestDensity() const
+	{
+		return restDensity;
+	}
+
+	float getStiffness() const
+	{
+		return stiffness;
+	}
+	
+	float getKernel() const
+	{
+		return kernel;
+	}
+
+	float getViscosity() const
+	{
+		return viscosity;
+	}
+
+	glm::vec2 getGravity() const
+	{
+		return gravity;
+	}
+
+	float getWallDamping() const
+	{
+		return wallDamping;
+	}
+
+	float getTimeStep() const
+	{
+		return timeStep;
+	}
+
 	//getter
-	unsigned getNumParticle() const { return numParticle; }
+	unsigned getNumParticles() const { return numParticle; }
 	glm::vec2 getWorldSize() const { return worldSize; }
 	Particle const* getParticles() const { return particles.data(); }
 	Cell const* getCells() const { return cells.data(); }
 
-private:
+	float getCellSize() const { return cellSize; }
+protected:
 	float kernel;
 	float mass;
 

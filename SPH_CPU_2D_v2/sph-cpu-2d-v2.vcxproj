@@ -40,10 +40,12 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="SPHSystem.cpp" />
+    <ClCompile Include="XfbClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SPHSystem.h" />
     <ClInclude Include="Structure.h" />
+    <ClInclude Include="XfbClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.cu": "cpp",
+        "*.glsl": "glsl",
+        "stdexcept": "cpp"
+    }
+}

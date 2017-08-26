@@ -17,12 +17,18 @@
     <ClCompile Include="SPHSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="XfbClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SPHSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Structure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XfbClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
