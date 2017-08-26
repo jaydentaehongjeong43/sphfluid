@@ -1,31 +1,13 @@
-/** File:		SPHSystem.h
- ** Author:		Dongli Zhang
- ** Contact:	dongli.zhang0129@gmail.com
- **
- ** Copyright (C) Dongli Zhang 2013
- **
- ** This program is free software;  you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License as published by
- ** the Free Software Foundation; either version 2 of the License, or
- ** (at your option) any later version.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY;  without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- ** the GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program;  if not, write to the Free Software 
- ** Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
-
 #ifndef __SPHSYSTEM_H__
 #define __SPHSYSTEM_H__
 
 #include "Structure.h"
+#include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <functional>
 
-#define PI 3.141592f
+#define PI glm::pi<float>()
 #define INF 1E-12f
 
 class SPHSystem
@@ -40,23 +22,28 @@ public:
 	unsigned calcCellHash(glm::ivec2 pos) const;
 
 	//kernel function
-	float poly6(float r2) const { return 315.0f/(64.0f * PI * pow(kernel, 9)) * pow(kernel*kernel-r2, 3); }
-	float spiky(float r) const { return -45.0f/(PI * pow(kernel, 6)) * (kernel-r) * (kernel-r); }
-	float visco(float r) const { return 45.0f/(PI * pow(kernel, 6)) * (kernel-r); }
+	float poly6(float r2) const { return 315.0f / (64.0f * PI * pow(kernel, 9)) * pow(kernel * kernel - r2, 3); }
+	float spiky(float r) const { return -45.0f / (PI * pow(kernel, 6)) * (kernel - r) * (kernel - r); }
+	float visco(float r) const { return 45.0f / (PI * pow(kernel, 6)) * (kernel - r); }
 
 	//animation
 	void compTimeStep();
-	void buildGrid() const;
-	void compDensPressure() const;
-	void compForce() const;
-	void advection() const;
-	void animation() const;
+	void buildGrid();
+	void _compDensPressure_process(Particle& p, unsigned hash);
+	void compDensPressure();
+	void _compForce_processCell(Particle* p, unsigned hash);
+	void forEachParticle(std::function<void(Particle&)> func);
+	void clearAcceleration();
+	void computeAcceleration();
+	void compForce();
+	void advection();
+	void animation();
 
 	//getter
 	unsigned getNumParticle() const { return numParticle; }
 	glm::vec2 getWorldSize() const { return worldSize; }
-	Particle* getParticles() const { return particles; }
-	Cell* getCells() const { return cells; }
+	Particle const* getParticles() const { return particles.data(); }
+	Cell const* getCells() const { return cells.data(); }
 
 private:
 	float kernel;
@@ -78,8 +65,8 @@ private:
 	float wallDamping;
 	float viscosity;
 
-	Particle *particles;
-	Cell *cells;
+	std::vector<Particle> particles;
+	std::vector<Cell> cells;
 };
 
 #endif
