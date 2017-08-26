@@ -22,8 +22,8 @@
 #ifndef __SPHSYSTEM_H__
 #define __SPHSYSTEM_H__
 
-#include "Vector2D.h"
 #include "Structure.h"
+#include <glm/glm.hpp>
 
 #define PI 3.141592f
 #define INF 1E-12f
@@ -31,47 +31,47 @@
 class SPHSystem
 {
 public:
+
 	SPHSystem();
 	~SPHSystem();
 	void initFluid();
-	void addSingleParticle(Vec2f pos, Vec2f vel);
-	Vec2i calcCellPos(Vec2f pos);
-	uint calcCellHash(Vec2i pos);
+	void addSingleParticle(glm::vec2 pos, glm::vec2 vel);
+	glm::ivec2 calcCellPos(glm::vec2 pos) const;
+	unsigned calcCellHash(glm::ivec2 pos) const;
 
 	//kernel function
-	float poly6(float r2){ return 315.0f/(64.0f * PI * pow(kernel, 9)) * pow(kernel*kernel-r2, 3); }
-	float spiky(float r){ return -45.0f/(PI * pow(kernel, 6)) * (kernel-r) * (kernel-r); }
-	float visco(float r){ return 45.0f/(PI * pow(kernel, 6)) * (kernel-r); }
+	float poly6(float r2) const { return 315.0f/(64.0f * PI * pow(kernel, 9)) * pow(kernel*kernel-r2, 3); }
+	float spiky(float r) const { return -45.0f/(PI * pow(kernel, 6)) * (kernel-r) * (kernel-r); }
+	float visco(float r) const { return 45.0f/(PI * pow(kernel, 6)) * (kernel-r); }
 
 	//animation
 	void compTimeStep();
-	void buildGrid();
-	void compDensPressure();
-	void compForce();
-	void advection();
-	void animation();
+	void buildGrid() const;
+	void compDensPressure() const;
+	void compForce() const;
+	void advection() const;
+	void animation() const;
 
 	//getter
-	uint getNumParticle(){ return numParticle; }
-	Vec2f getWorldSize(){ return worldSize; }
-	Particle* getParticles(){ return particles; }
-	Cell* getCells(){ return cells; }
-
+	unsigned getNumParticle() const { return numParticle; }
+	glm::vec2 getWorldSize() const { return worldSize; }
+	Particle* getParticles() const { return particles; }
+	Cell* getCells() const { return cells; }
 
 private:
 	float kernel;
 	float mass;
 
-	uint maxParticle;
-	uint numParticle;
+	unsigned maxParticle;
+	unsigned numParticle;
 
-	Vec2i gridSize;
-	Vec2f worldSize;
+	glm::ivec2 gridSize;
+	glm::vec2 worldSize;
 	float cellSize;
-	uint totCell;
+	unsigned totCell;
 
 	//params
-	Vec2f gravity;
+	glm::vec2 gravity;
 	float stiffness;
 	float restDensity;
 	float timeStep;

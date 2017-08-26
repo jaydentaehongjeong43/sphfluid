@@ -30,6 +30,7 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(GLM_INCLUDE);$(GLEW_INCLUDE);$(GLFW_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(GLEW_LIB)\Release\x64;$(GLFW_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -39,13 +40,10 @@
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="SPHSystem.cpp" />
-    <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SPHSystem.h" />
     <ClInclude Include="Structure.h" />
-    <ClInclude Include="Timer.h" />
-    <ClInclude Include="Vector2D.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

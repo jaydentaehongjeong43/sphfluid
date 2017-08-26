@@ -1,29 +1,6 @@
-/** File:		SPHSystem.cpp
- ** Author:		Dongli Zhang
- ** Contact:	dongli.zhang0129@gmail.com
- **
- ** Copyright (C) Dongli Zhang 2013
- **
- ** This program is free software;  you can redistribute it and/or modify
- ** it under the terms of the GNU General Public License as published by
- ** the Free Software Foundation; either version 2 of the License, or
- ** (at your option) any later version.
- **
- ** This program is distributed in the hope that it will be useful,
- ** but WITHOUT ANY WARRANTY;  without even the implied warranty of
- ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- ** the GNU General Public License for more details.
- **
- ** You should have received a copy of the GNU General Public License
- ** along with this program;  if not, write to the Free Software 
- ** Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
-
 #include "SPHSystem.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <string.h>
 
 SPHSystem::SPHSystem()
 {
@@ -33,13 +10,13 @@ SPHSystem::SPHSystem()
 	maxParticle = 10000;
 	numParticle = 0;
 
-	worldSize.x = 2.56f;
-	worldSize.y = 2.56f;
+	worldSize.x = 3.84f;
+	worldSize.y = 3.84f;
 	cellSize = kernel;
-	gridSize.x = (int)(worldSize.x/cellSize);
-	gridSize.y = (int)(worldSize.y/cellSize);
-	totCell = (uint)(gridSize.x) * (uint)(gridSize.y);
-	
+	gridSize.x = int(worldSize.x / cellSize);
+	gridSize.y = int(worldSize.y / cellSize);
+	totCell = unsigned(gridSize.x) * unsigned(gridSize.y);
+
 	//params
 	gravity.x = 0.0f;
 	gravity.y = -1.8f;
@@ -49,8 +26,8 @@ SPHSystem::SPHSystem()
 	wallDamping = 0.0f;
 	viscosity = 8.0f;
 
-	particles = (Particle *)malloc(sizeof(Particle)*maxParticle);
-	cells = (Cell *)malloc(sizeof(Cell)*totCell);
+	particles = static_cast<Particle *>(malloc(sizeof(Particle) * maxParticle));
+	cells = static_cast<Cell *>(malloc(sizeof(Cell) * totCell));
 
 	printf("SPHSystem:\n");
 	printf("GridSizeX: %d\n", gridSize.x);
@@ -66,11 +43,11 @@ SPHSystem::~SPHSystem()
 
 void SPHSystem::initFluid()
 {
-	Vec2f pos;
-	Vec2f vel(0.0f, 0.0f);
-	for(float i=worldSize.x*0.3f; i<=worldSize.x*0.7f; i+=kernel*0.6f)
+	glm::vec2 pos;
+	glm::vec2 vel(0.0f, 0.0f);
+	for (auto i = worldSize.x * 0.3f; i <= worldSize.x * 0.7f; i += kernel * 0.6f)
 	{
-		for(float j=worldSize.y*0.3f; j<=worldSize.y*0.9f; j+=kernel*0.6f)
+		for (auto j = worldSize.y * 0.3f; j <= worldSize.y * 0.9f; j += kernel * 0.6f)
 		{
 			pos.x = i;
 			pos.y = j;
@@ -81,35 +58,35 @@ void SPHSystem::initFluid()
 	printf("NUM Particle: %u\n", numParticle);
 }
 
-void SPHSystem::addSingleParticle(Vec2f pos, Vec2f vel)
+void SPHSystem::addSingleParticle(glm::vec2 pos, glm::vec2 vel)
 {
-	Particle *p = &(particles[numParticle]);
+	auto p = &particles[numParticle];
 	p->pos = pos;
 	p->vel = vel;
-	p->acc = Vec2f(0.0f, 0.0f);
+	p->acc = glm::vec2(0.0f, 0.0f);
 	p->ev = vel;
 	p->dens = restDensity;
-	p->next = NULL;
+	p->next = nullptr;
 	numParticle++;
 }
 
-Vec2i SPHSystem::calcCellPos(Vec2f pos)
+glm::ivec2 SPHSystem::calcCellPos(glm::vec2 pos) const
 {
-	Vec2i res;
-	res.x = (int)(pos.x/cellSize);
-	res.y = (int)(pos.y/cellSize);
+	glm::ivec2 res;
+	res.x = static_cast<int>(pos.x / cellSize);
+	res.y = static_cast<int>(pos.y / cellSize);
 	return res;
 }
-	
-uint SPHSystem::calcCellHash(Vec2i pos)
+
+unsigned SPHSystem::calcCellHash(glm::ivec2 pos) const
 {
-	if(pos.x<0 || pos.x>=gridSize.x || pos.y<0 || pos.y>=gridSize.y)
+	if (pos.x < 0 || pos.x >= gridSize.x || pos.y < 0 || pos.y >= gridSize.y)
 	{
 		return 0xffffffff;
 	}
 
-	uint hash = (uint)(pos.y) * (uint)(gridSize.x) + (uint)(pos.x);
-	if(hash >= totCell)
+	auto hash = unsigned(pos.y) * unsigned(gridSize.x) + unsigned(pos.x);
+	if (hash >= totCell)
 	{
 		printf("ERROR!\n");
 		getchar();
@@ -119,18 +96,16 @@ uint SPHSystem::calcCellHash(Vec2i pos)
 
 void SPHSystem::compTimeStep()
 {
-	Particle *p;
-	float maxAcc = 0.0f;
-	float curAcc;
-	for(uint i=0; i<numParticle; i++)
+	auto maxAcc = 0.0f;
+	for (unsigned i = 0; i < numParticle; i++)
 	{
-		p = &(particles[i]);
-		curAcc = p->acc.Length();
-		if(curAcc > maxAcc) maxAcc=curAcc;
+		auto p = &particles[i];
+		auto curAcc = glm::length(p->acc);
+		if (curAcc > maxAcc) maxAcc = curAcc;
 	}
-	if(maxAcc > 0.0f)
+	if (maxAcc > 0.0f)
 	{
-		timeStep = kernel/maxAcc*0.4f;
+		timeStep = kernel / maxAcc * 0.4f;
 	}
 	else
 	{
@@ -138,19 +113,17 @@ void SPHSystem::compTimeStep()
 	}
 }
 
-void SPHSystem::buildGrid()
+void SPHSystem::buildGrid() const
 {
-	for(uint i=0; i<totCell; i++) cells[i].head = NULL;
-	Particle *p;
-	uint hash;
-	for(uint i=0; i<numParticle; i++)
+	for (unsigned i = 0; i < totCell; i++) cells[i].head = nullptr;
+	for (unsigned i = 0; i < numParticle; i++)
 	{
-		p = &(particles[i]);
-		hash = calcCellHash(calcCellPos(p->pos));
+		auto p = &particles[i];
+		auto hash = calcCellHash(calcCellPos(p->pos));
 
-		if(cells[hash].head == NULL)
+		if (cells[hash].head == nullptr)
 		{
-			p->next = NULL;
+			p->next = nullptr;
 			cells[hash].head = p;
 		}
 		else
@@ -161,34 +134,30 @@ void SPHSystem::buildGrid()
 	}
 }
 
-void SPHSystem::compDensPressure()
+void SPHSystem::compDensPressure() const
 {
-	Particle *p;
-	Particle *np;
-	Vec2i cellPos;
-	Vec2i nearPos;
-	uint hash;
-	for(uint k=0; k<numParticle; k++)
+	glm::ivec2 nearPos;
+	for (auto k = 0; k < int(numParticle); k++)
 	{
-		p = &(particles[k]);
+		auto p = &particles[k];
 		p->dens = 0.0f;
 		p->pres = 0.0f;
-		cellPos = calcCellPos(p->pos);
-		for(int i=-1; i<=1; i++)
+		auto cellPos = calcCellPos(p->pos);
+		for (auto i = -1; i <= 1; i++)
 		{
-			for(int j=-1; j<=1; j++)
+			for (auto j = -1; j <= 1; j++)
 			{
 				nearPos.x = cellPos.x + i;
 				nearPos.y = cellPos.y + j;
-				hash = calcCellHash(nearPos);
-				if(hash == 0xffffffff) continue;
-				np = cells[hash].head;
-				while(np != NULL)
+				auto hash = calcCellHash(nearPos);
+				if (hash == 0xffffffff) continue;
+				auto np = cells[hash].head;
+				while (np != nullptr)
 				{
-					Vec2f distVec = np->pos - p->pos;
-					float dist2 = distVec.LengthSquared();
-					
-					if(dist2<INF || dist2>=kernel*kernel)
+					auto distVec = np->pos - p->pos;
+					auto dist2 = glm::dot(distVec, distVec);
+
+					if (dist2 < INF || dist2 >= kernel * kernel)
 					{
 						np = np->next;
 						continue;
@@ -199,94 +168,88 @@ void SPHSystem::compDensPressure()
 				}
 			}
 		}
-		p->dens = p->dens + mass*poly6(0.0f);
+		p->dens = p->dens + mass * poly6(0.0f);
 		p->pres = (pow(p->dens / restDensity, 7) - 1) * stiffness;
 	}
 }
 
-void SPHSystem::compForce()
+void SPHSystem::compForce() const
 {
-	Particle *p;
-	Particle *np;
-	Vec2i cellPos;
-	Vec2i nearPos;
-	uint hash;
-	for(uint k=0; k<numParticle; k++)
+	glm::ivec2 nearPos;
+	for (unsigned k = 0; k < numParticle; k++)
 	{
-		p = &(particles[k]);
-		p->acc = Vec2f(0.0f, 0.0f);
-		cellPos = calcCellPos(p->pos);
-		for(int i=-1; i<=1; i++)
+		auto p = &particles[k];
+		p->acc = glm::vec2(0.0f, 0.0f);
+		auto cellPos = calcCellPos(p->pos);
+		for (auto i = -1; i <= 1; i++)
 		{
-			for(int j=-1; j<=1; j++)
+			for (auto j = -1; j <= 1; j++)
 			{
 				nearPos.x = cellPos.x + i;
 				nearPos.y = cellPos.y + j;
-				hash = calcCellHash(nearPos);
-				if(hash == 0xffffffff) continue;
-				np = cells[hash].head;
-				while(np != NULL)
+				auto hash = calcCellHash(nearPos);
+				if (hash == 0xffffffff) continue;
+				auto np = cells[hash].head;
+				while (np != nullptr)
 				{
-					Vec2f distVec = p->pos - np->pos;
-					float dist2 = distVec.LengthSquared();
+					auto distVec = p->pos - np->pos;
+					auto dist2 = glm::dot(distVec, distVec);
 
-					if(dist2 < kernel*kernel && dist2 > INF)
+					if (dist2 < kernel * kernel && dist2 > INF)
 					{
-						float dist = sqrt(dist2);
-						float V = mass / p->dens;
+						auto dist = sqrt(dist2);
+						auto V = mass / p->dens;
 
-						float tempForce = V * (p->pres+np->pres) * spiky(dist);
-						p->acc = p->acc - distVec*tempForce/dist;
+						auto tempForce = V * (p->pres + np->pres) * spiky(dist);
+						p->acc = p->acc - distVec * tempForce / dist;
 
-						Vec2f relVel;
-						relVel = np->ev-p->ev;
+						auto relVel = np->ev - p->ev;
 						tempForce = V * viscosity * visco(dist);
-						p->acc = p->acc + relVel*tempForce; 
+						p->acc = p->acc + relVel * tempForce;
 					}
 
 					np = np->next;
 				}
 			}
 		}
-		p->acc = p->acc/p->dens+gravity;
+		p->acc = p->acc / p->dens + gravity;
 	}
 }
 
-void SPHSystem::advection()
+void SPHSystem::advection() const
 {
-	Particle *p;
-	for(uint i=0; i<numParticle; i++)
+	for (auto i = 0; i < int(numParticle); i++)
 	{
-		p = &(particles[i]);
-		p->vel = p->vel+p->acc*timeStep;
-		p->pos = p->pos+p->vel*timeStep;
+		auto p = &particles[i];
+		p->vel = p->vel + p->acc * timeStep;
+		p->pos = p->pos + p->vel * timeStep;
 
-		if(p->pos.x < 0.0f)
+		if (p->pos.x < 0.0f)
 		{
 			p->vel.x = p->vel.x * wallDamping;
 			p->pos.x = 0.0f;
 		}
-		if(p->pos.x >= worldSize.x)
+		if (p->pos.x >= worldSize.x)
 		{
 			p->vel.x = p->vel.x * wallDamping;
 			p->pos.x = worldSize.x - 0.0001f;
 		}
-		if(p->pos.y < 0.0f)
+		if (p->pos.y < 0.0f)
 		{
 			p->vel.y = p->vel.y * wallDamping;
 			p->pos.y = 0.0f;
 		}
-		if(p->pos.y >= worldSize.y)
+		if (p->pos.y >= worldSize.y)
 		{
 			p->vel.y = p->vel.y * wallDamping;
 			p->pos.y = worldSize.y - 0.0001f;
 		}
 
-		p->ev=(p->ev+p->vel)/2;
+		p->ev = (p->ev + p->vel) / 2.f;
 	}
 }
 
-void SPHSystem::animation()
+void SPHSystem::animation() const
 {
 	buildGrid();
 	compDensPressure();
