@@ -213,7 +213,7 @@ int main(int argc, char** argv)
 		glClearColor(.0f, .0f, .0f, .0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		sph->animation();
+		sph->simulate();
 
 		updateBuffer();
 

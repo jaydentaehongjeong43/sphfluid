@@ -39,7 +39,7 @@ public:
 	void initFluid();
 	void addSingleParticle(glm::vec2 pos, glm::vec2 vel);
 	glm::ivec2 calcCellPos(glm::vec2 pos) const;
-	unsigned calcCellHash(glm::ivec2 pos) const;
+	int calcCellHash(glm::ivec2 pos) const;
 
 	//kernel function
 	float poly6(float r2) const { return 315.0f / (64.0f * PI * pow(kernel, 9)) * pow(kernel * kernel - r2, 3); }
@@ -48,16 +48,8 @@ public:
 
 	//animation
 	void compTimeStep();
-	void buildGrid();
-	void _compDensPressure_process(Particle& p, unsigned hash);
-	void compDensPressure();
-	void _compForce_processCell(Particle& p, unsigned hash);
 	void forEachParticle(std::function<void(Particle&)> func);
-	void clearAcceleration();
-	void computeAcceleration();
-	void compForce();
-	void advection();
-	void animation();
+	void simulate();
 
 	//getter
 	unsigned getNumParticle() const { return numParticle; }
