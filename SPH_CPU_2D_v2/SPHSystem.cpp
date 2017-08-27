@@ -58,9 +58,9 @@ void SPHSystem::initFluid()
 {
 	vec2 pos;
 	vec2 vel(0.0f, 0.0f);
-	for (auto i = worldSize.x * 0.3f; i <= worldSize.x * 0.7f; i += kernel * 0.6f)
+	for (auto i = worldSize.x * 0.f; i <= worldSize.x * 1.f; i += kernel * 0.6f)
 	{
-		for (auto j = worldSize.y * 0.3f; j <= worldSize.y * 0.9f; j += kernel * 0.6f)
+		for (auto j = worldSize.y * 0.f; j <= worldSize.y * 1.f; j += kernel * 0.6f)
 		{
 			pos.x = i;
 			pos.y = j;

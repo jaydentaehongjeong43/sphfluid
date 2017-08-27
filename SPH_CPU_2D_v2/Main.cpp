@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 		auto const projectionMat{ortho(0.f, sph.worldSize.x, 0.f, sph.worldSize.y)};
 		auto const modelMat{mat4()}, viewMat{mat4()}, mvpMat{projectionMat * viewMat * modelMat};
 
-		glClearColor(.0f, .0f, .0f, .0f);
+		glClearColor(.1f, .1f, .1f, .1f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		sph.pullParticlesFromBuffer(sph.getPrimaryParticleBuffer());
