@@ -24,23 +24,6 @@
 #include <functional>
 using namespace glm;
 
-struct RoiIterator
-{
-	explicit RoiIterator(ivec2 _center) : center(_center)
-	{
-	}
-
-	ivec2 next()
-	{
-		cursor = cursor + 1;
-		return center + offset + ivec2{(cursor % radius), (cursor / radius)};
-	}
-
-private:
-	ivec2 center, offset{-1, -1};
-	int cursor{-1}, radius{3};
-};
-
 SPHSystem::SPHSystem()
 {
 	kernel = 0.04f;
