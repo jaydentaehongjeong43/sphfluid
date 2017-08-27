@@ -1,8 +1,8 @@
 #version 440 core
 // #extension GL_ARB_enhanced_layouts : require
 
-#define PI 3.14159265359
-#define INF 1E-12
+#define PI 3.141592
+#define INF 0.000001
 
 struct Particle
 {
@@ -58,7 +58,6 @@ uniform float wallDamping;
 uniform vec2 gravity;
 uniform vec2 worldSize;
 
-
 ivec2 calcCellPos(vec2 pos)
 {
 	return ivec2(int(pos.x / cellSize), int(pos.y / cellSize));
@@ -66,17 +65,18 @@ ivec2 calcCellPos(vec2 pos)
 
 int calcCellHash(ivec2 pos)
 {
-	if (pos.x < 0 || pos.x >= gridWidth || pos.y < 0 || pos.y >= gridHeight)
-		return -1;
+	if (pos.x < 0 || pos.x >= gridWidth || pos.y < 0 || pos.y >= gridHeight) return -1;
 	return pos.y * gridWidth + pos.x;
 }
 
-float poly6(float r2) { return 315.0 / (64.0 * PI * pow(kernel, 9)) * pow(kernel * kernel - r2, 3); }
-float spiky(float r) { return -45.0 / (PI * pow(kernel, 6)) * (kernel - r) * (kernel - r); }
-float visco(float r) { return 45.0 / (PI * pow(kernel, 6)) * (kernel - r); }
+float poly6(float r2) { return 315.0 / (64.0 * PI * pow(kernel, 9.0)) * pow(kernel * kernel - r2, 3.0); }
+float spiky(float r) { return -45.0 / (PI * pow(kernel, 6.0)) * (kernel - r) * (kernel - r); }
+float visco(float r) { return 45.0 / (PI * pow(kernel, 6.0)) * (kernel - r); }
 
 void main() {
   Particle p = particles[gl_VertexID];
+  p.dens = 0.0;
+  p.pres = 0.0;
   ivec2 cellPos = calcCellPos(p.pos);
   for (int xoffset = -1; xoffset <=1; ++xoffset) {
     for (int yoffset = -1; yoffset <=1; ++yoffset) {
@@ -87,7 +87,7 @@ void main() {
       while (neighborIdx >= 0)
       {
         Particle neighbor = particles[neighborIdx];
-        vec2 distVec = neighbor.pos - p.pos;
+        vec2 distVec = p.pos - neighbor.pos;
         float dist2 = dot(distVec, distVec);
         // if too close or out of kernel, then skip
         if (dist2 > INF && dist2 < kernel * kernel)
@@ -98,6 +98,8 @@ void main() {
   }
   p.dens = p.dens + mass * poly6(0.0); // self
   p.pres = (pow(p.dens / restDensity, 7) - 1) * stiffness;
+
+  p.acc = vec2(0.0, 0.0);
 
   for (int xoffset = -1; xoffset <=1; ++xoffset) {
     for (int yoffset = -1; yoffset <=1; ++yoffset) {
@@ -129,11 +131,10 @@ void main() {
       }
     }
   }
-  
   p.acc = p.acc / p.dens + gravity;
   
-  p.vel = p.vel + p.acc * 0.0001;
-  p.pos = p.pos + p.vel * 0.0001;
+  p.vel = p.vel + p.acc * timeStep;
+  p.pos = p.pos + p.vel * timeStep;
 
   if (p.pos.x < 0.0)
   {
@@ -156,7 +157,7 @@ void main() {
     p.pos.y = worldSize.y - 0.0001;
   }
 
-  p.ev = (p.ev + p.vel) / 2;
+  p.ev = (p.ev + p.vel) / 2.0;
 
   vertOut.pos  = p.pos;
   vertOut.vel  = p.vel;
@@ -165,4 +166,5 @@ void main() {
   vertOut.dens = p.dens;
   vertOut.pres = p.pres;
   vertOut.next = p.next;
+  vertOut.pad = p.pad = 0;
 }

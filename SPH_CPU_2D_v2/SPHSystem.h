@@ -50,6 +50,7 @@ public:
 	void compTimeStep();
 	void clearGrid();
 	void buildGrid();
+	void buildGrid(std::vector<Particle>& particles);
 	void _compDensPressure_process(Particle& p, unsigned hash);
 	void compDensPressure();
 	void _compForce_processCell(Particle& p, unsigned hash);

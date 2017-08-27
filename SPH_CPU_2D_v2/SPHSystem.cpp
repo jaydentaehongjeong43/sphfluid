@@ -57,7 +57,7 @@ SPHSystem::SPHSystem()
 
 	//params
 	gravity.x = 0.0f;
-	gravity.y = -9.8f;
+	gravity.y = -1.8f;
 	stiffness = 1000.0f;
 	restDensity = 1000.0f;
 	timeStep = 0.0001f;
@@ -151,6 +151,16 @@ void SPHSystem::buildGrid()
 	{
 		auto& p{particles[i]};
 		auto const hash{calcCellHash(calcCellPos(p.pos))};
+		p.next = cells[hash].head;
+		cells[hash].head = i;
+	}
+}
+void SPHSystem::buildGrid(std::vector<Particle>& particles)
+{
+	for (unsigned i = 0; i < numParticle; i++)
+	{
+		auto& p{ particles[i] };
+		auto const hash{ calcCellHash(calcCellPos(p.pos)) };
 		p.next = cells[hash].head;
 		cells[hash].head = i;
 	}

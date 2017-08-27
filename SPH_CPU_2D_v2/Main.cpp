@@ -32,8 +32,8 @@
 #include "XfbClient.h"
 
 GLFWwindow* window;
-int windowWidth = 540;
-int windowHeight = 960;
+int windowWidth = 512;
+int windowHeight = 512;
 char*const windowTitle = "SPH CPU 2D v2";
 
 
@@ -206,12 +206,12 @@ struct MySphSystem: SPHSystem
 		return getNumParticles() * sizeof(Particle);
 	}
 
-//	void updateBuffer() const
-//	{
-//		glBindBuffer(GL_SHADER_STORAGE_BUFFER, getInitialParticleBuffer());
-//		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, getBufferSize(), getParticles());
-//		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-//	}
+	//	void updateBuffer() const
+	//	{
+	//		glBindBuffer(GL_SHADER_STORAGE_BUFFER, getInitialParticleBuffer());
+	//		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, getBufferSize(), getParticles());
+	//		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	//	}
 
 	void drawVertexArray() const
 	{
@@ -261,7 +261,7 @@ private:
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	}
 
-	unsigned initialParticleBuffer{ 0 };
+	unsigned initialParticleBuffer{0};
 	unsigned cellBuffer{0};
 	unsigned vertexArray{0};
 };
@@ -321,6 +321,11 @@ struct MyFluidSystem
 	{
 	}
 
+	XfbClientImpl& getPingOrPong()
+	{
+		return toggle == 1 ? pong_ : ping_;
+	}
+
 	void simulate()
 	{
 		if (toggle == -1)
@@ -331,7 +336,7 @@ struct MyFluidSystem
 		else
 		{
 			auto& pongOrPing{toggle == 0 ? pong_ : ping_};
-			auto& pingOrPong{toggle == 1 ? pong_ : ping_};
+			auto& pingOrPong{(getPingOrPong())};
 			pongOrPing(pingOrPong);
 			toggle = 1 - toggle;
 		}
@@ -364,7 +369,7 @@ int main(int argc, char** argv)
 	MySphSystem sph;
 	MyFluidSystem fluid(sph);
 
-//	initTexCells(sph);
+	//	initTexCells(sph);
 	initProgram();
 	initXfbProgram();
 
@@ -372,21 +377,7 @@ int main(int argc, char** argv)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_POINT_SMOOTH);
 	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-	auto mvpMatLocation{glGetUniformLocation(program, "mvpMat")};
 
-//	auto cellsLocation{glGetUniformLocation(programXfb, "cells")};
-	auto cellSizeLocation{glGetUniformLocation(programXfb, "cellSize")};
-	auto gridWidthLocation{glGetUniformLocation(programXfb, "gridWidth")};
-	auto gridHeightLocation{ glGetUniformLocation(programXfb, "gridHeight") };
-	auto massLocation{ glGetUniformLocation(programXfb, "mass") };
-	auto restDensityLocation{ glGetUniformLocation(programXfb, "restDensity") };
-	auto stiffnessLocation{ glGetUniformLocation(programXfb, "stiffness") };
-	auto kernelLocation{glGetUniformLocation(programXfb, "kernel")};
-	auto gravityLocation{ glGetUniformLocation(programXfb, "gravity") };
-	auto viscosityLocation{ glGetUniformLocation(programXfb, "viscosity") };
-	auto wallDampingLocation{ glGetUniformLocation(programXfb, "wallDamping") };
-	auto timeStepLocation{ glGetUniformLocation(programXfb, "timeStep") };
-	auto worldSizeLocation{ glGetUniformLocation(programXfb, "worldSize") };
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -403,45 +394,40 @@ int main(int argc, char** argv)
 		glClearColor(.0f, .0f, .0f, .0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-//		sph.animation();
-//		sph.updateBuffer();
-//		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-//		{
-			sph.clearGrid();
-			sph.buildGrid();
-			sph.initCellBuffer();
-//			glBindTexture(GL_TEXTURE_2D, texCells);
-//			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, sph.getGridWidth(), sph.getGridHeight(), GL_RED_INTEGER, GL_INT, sph.getCells());
-//			glBindTexture(GL_TEXTURE_2D, 0);
+		glUseProgram(programXfb);
+		glUniform1i(glGetUniformLocation(programXfb, "gridWidth"), sph.getGridWidth());
+		glUniform1i(glGetUniformLocation(programXfb, "gridHeight"), sph.getGridHeight());
+		glUniform1f(glGetUniformLocation(programXfb, "cellSize"), sph.getCellSize());
+		glUniform1f(glGetUniformLocation(programXfb, "mass"), sph.getMass());
+		glUniform1f(glGetUniformLocation(programXfb, "restDensity"), sph.getRestDensity());
+		glUniform1f(glGetUniformLocation(programXfb, "stiffness"), sph.getStiffness());
+		glUniform1f(glGetUniformLocation(programXfb, "kernel"), sph.getKernel());
+		glUniform1f(glGetUniformLocation(programXfb, "viscosity"), sph.getViscosity());
+		glUniform1f(glGetUniformLocation(programXfb, "wallDamping"), sph.getWallDamping());
+		glUniform1f(glGetUniformLocation(programXfb, "timeStep"), sph.getTimeStep());
+		glUniform2fv(glGetUniformLocation(programXfb, "gravity"), 1, value_ptr(sph.getGravity()));
+		glUniform2fv(glGetUniformLocation(programXfb, "worldSize"), 1, value_ptr(sph.getWorldSize()));
+		for (auto i =0; i < 30; ++i)
+		{
+			std::vector<Particle> particles(sph.getNumParticles());
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, fluid.getPingOrPong().getBuffer());
+			glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sph.getParticleBufferSize(), particles.data());
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-			glUseProgram(programXfb);
-//			glActiveTexture(GL_TEXTURE0);
-//			glBindTexture(GL_TEXTURE_2D, texCells);
-//			glUniform1i(cellsLocation, 0);
-			glUniform1f(cellSizeLocation, sph.getCellSize());
-			glUniform1i(gridWidthLocation, sph.getGridWidth());
-			glUniform1i(gridHeightLocation, sph.getGridHeight());
-			glUniform1f(massLocation, sph.getMass());
-			glUniform1f(restDensityLocation, sph.getRestDensity());
-			glUniform1f(stiffnessLocation, sph.getStiffness());
-			glUniform1f(kernelLocation, sph.getKernel());
-			glUniform1f(viscosityLocation, sph.getViscosity());
-			glUniform1f(wallDampingLocation, sph.getWallDamping());
-			glUniform1f(timeStepLocation, sph.getTimeStep());
-			glUniform2fv(gravityLocation, 1, glm::value_ptr(sph.getGravity()));
-			glUniform2fv(worldSizeLocation, 1, glm::value_ptr(sph.getWorldSize()));
+			sph.clearGrid();
+			sph.buildGrid(particles);
+			sph.initCellBuffer();
+
 			fluid.simulate();
-			glUseProgram(0);
-//		}
+		}
+		glUseProgram(0);
 
 		glUseProgram(program);
-		glUniformMatrix4fv(mvpMatLocation, 1, GL_FALSE, value_ptr(mvpMat));
+		glUniformMatrix4fv(glGetUniformLocation(program, "mvpMat"), 1, GL_FALSE, value_ptr(mvpMat));
 		glEnable(GL_PROGRAM_POINT_SIZE);
 		glPointSize(2);
 		fluid.draw();
 		glUseProgram(0);
-
-		
 
 		glfwSwapBuffers(window);
 	}
