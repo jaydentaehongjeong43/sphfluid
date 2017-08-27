@@ -100,7 +100,6 @@ void main() {
   p.pres = (pow(p.dens / restDensity, 7) - 1) * stiffness;
 
   p.acc = vec2(0.0, 0.0);
-
   for (int xoffset = -1; xoffset <=1; ++xoffset) {
     for (int yoffset = -1; yoffset <=1; ++yoffset) {
       ivec2 nearPos = cellPos + ivec2(xoffset, yoffset);

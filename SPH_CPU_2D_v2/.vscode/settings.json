@@ -2,6 +2,7 @@
     "files.associations": {
         "*.cu": "cpp",
         "*.glsl": "glsl",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "xutility": "cpp"
     }
 }

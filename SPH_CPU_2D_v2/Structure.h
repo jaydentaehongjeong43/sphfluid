@@ -20,24 +20,3 @@
  ** along with this program;  if not, write to the Free Software
  ** Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-
-#include <glm/glm.hpp>
-
-struct Particle
-{
-	glm::vec2 pos;
-	glm::vec2 vel;
-	glm::vec2 acc;
-	glm::vec2 ev;
-
-	float dens;
-	float pres;
-
-	int next{-1};
-	int pad{0};
-};
-
-struct Cell
-{
-	int head{-1};
-};

@@ -31,6 +31,7 @@
       <AdditionalIncludeDirectories>$(GLM_INCLUDE);$(GLEW_INCLUDE);$(GLFW_INCLUDE);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(GLEW_LIB)\Release\x64;$(GLFW_LIB);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -38,14 +39,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="SPHSystem.cpp" />
-    <ClCompile Include="XfbClient.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="TransformFeedback.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="stdafx.h" />
     <ClInclude Include="SPHSystem.h" />
     <ClInclude Include="Structure.h" />
-    <ClInclude Include="XfbClient.h" />
+    <ClInclude Include="TransformFeedback.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
