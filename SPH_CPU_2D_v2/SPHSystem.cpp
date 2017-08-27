@@ -102,3 +102,92 @@ void SPHSystem::buildGrid()
 		cells[hash].head = i;
 	}
 }
+
+MySphSystem::MySphSystem(): SPHSystem()
+{
+	initFluid(); // create particles
+
+	glGenBuffers(1, &cellBuffer);
+	initCellBuffer();
+
+	glGenBuffers(2, particleBuffers);
+	initParticleBuffer(particleBuffers[0]); // init two particle buffers
+	initParticleBuffer(particleBuffers[1]); // init two particle buffers
+	pushParticlesToBuffer(getPrimaryParticleBuffer()); // push data to the first particle buffer
+
+	glGenVertexArrays(1, &vertexArray);
+	initVertexArray(getPrimaryParticleBuffer());
+}
+
+void MySphSystem::runXfb() const
+{
+	initVertexArray(getPrimaryParticleBuffer()); // source of vertices is primary buffer
+	xfb.init(getSecondaryParticleBuffer()); // destination of vertices is secondary buffer
+	TransformFeedback::Begin(xfb.get(), GL_POINTS);
+	drawVertexArray();
+	TransformFeedback::End();
+}
+
+void MySphSystem::drawVertexArray() const
+{
+	glBindVertexArray(getVertexArray());
+	glDrawArrays(GL_POINTS, 0, getNumParticles());
+	glBindVertexArray(0);
+}
+
+void MySphSystem::initVertexArray(unsigned particleBuffer) const
+{
+	glBindVertexArray(getVertexArray());
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, particleBuffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, getCellBuffer());
+	glBindBuffer(GL_ARRAY_BUFFER, particleBuffer);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 0));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 2));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 4));
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 6));
+	glVertexAttribPointer(4, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 8));
+	glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, sizeof(Particle), reinterpret_cast<void* const>(sizeof(float) * 9));
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glEnableVertexAttribArray(0); // vec2 pos;
+	glEnableVertexAttribArray(1); // vec2 vel;
+	glEnableVertexAttribArray(2); // vec2 acc;
+	glEnableVertexAttribArray(3); // vec2 ev;
+	glEnableVertexAttribArray(4); // float dens;
+	glEnableVertexAttribArray(5); // float pres;
+	glBindVertexArray(0);
+}
+
+void MySphSystem::initCellBuffer() const
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, getCellBuffer());
+	glBufferData(GL_SHADER_STORAGE_BUFFER, getCellBufferSize(), nullptr, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void MySphSystem::pushCellsToBuffer() const
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, getCellBuffer());
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, getCellBufferSize(), cells.data());
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void MySphSystem::initParticleBuffer(unsigned const particleBuffer) const
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleBuffer);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, getParticleBufferSize(), nullptr, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void MySphSystem::pushParticlesToBuffer(unsigned const particleBuffer) const
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleBuffer);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, getParticleBufferSize(), particles.data());
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void MySphSystem::pullParticlesFromBuffer(unsigned const particleBuffer)
+{
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, particleBuffer);
+	glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, getParticleBufferSize(), particles.data());
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}

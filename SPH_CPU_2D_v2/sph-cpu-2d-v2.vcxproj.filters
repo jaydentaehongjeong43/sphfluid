@@ -28,9 +28,6 @@
     <ClInclude Include="SPHSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Structure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>

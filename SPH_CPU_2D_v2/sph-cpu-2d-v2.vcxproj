@@ -49,7 +49,6 @@
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SPHSystem.h" />
-    <ClInclude Include="Structure.h" />
     <ClInclude Include="TransformFeedback.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
