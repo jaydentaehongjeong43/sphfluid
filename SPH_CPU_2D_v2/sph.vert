@@ -122,7 +122,7 @@ void main() {
           float tempForce = V * (p.pres + neighbor.pres) * spiky(dist);
           p.acc = p.acc - distVec * tempForce / dist;
 
-          vec2 relVel = neighbor.ev - p.ev;
+          vec2 relVel = p.ev - neighbor.ev;
           tempForce = V * viscosity * visco(dist);
           p.acc = p.acc + relVel * tempForce;
         }
